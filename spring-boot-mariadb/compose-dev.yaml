@@ -1,0 +1,50 @@
+services:
+  backend:
+    build: backend
+    ports:
+      - 8080:8080
+    environment:
+      - DB_DATABASE=main
+      - DB_USER=spring
+      - DB_PASSWORD_FILE=/run/secrets/db-userpass
+    volumes:
+      - ./backend:/code
+    networks:
+      - maria
+    secrets:
+      - db-userpass
+    depends_on:
+      - db
+      # db:
+      #   condition: service_healthy
+  db:
+    image: mariadb:10.11.2-jammy
+    restart: always
+    # healthcheck:
+    #   test: healthcheck.sh --connect
+    #   interval: 5s
+    #   timeout: 10s
+    #   retries: 10
+    expose:
+      - 3306
+    environment:
+      - MARIADB_ROOT_PASSWORD_FILE=/run/secrets/db-rootpass
+      - MARIADB_DATABASE=main
+      - MARIADB_USER=spring
+      - MARIADB_PASSWORD_FILE=/run/secrets/db-userpass
+    volumes:
+      - db-data:/var/lib/mysql/data
+    networks:
+      - maria
+    secrets:
+      - db-rootpass
+      - db-userpass
+volumes:
+  db-data:
+secrets:
+  db-rootpass:
+    file: db/rootpass.txt
+  db-userpass:
+    file: db/userpass.txt
+networks:
+  maria:
